@@ -1,0 +1,89 @@
+QUERY ONE:
+
+ SELECT
+    patientid,
+    gender,
+    age,
+    neighbourhood,
+    no_show
+FROM
+    cleaned_medical_appointments
+WHERE
+    age >= 60 AND no_show = 'Yes'
+ORDER BY
+    age DESC;
+
+
+QUERY TWO:
+
+SELECT
+    neighbourhood,
+    COUNT(appointmentid) AS Total_Appointments,
+    SUM(CASE WHEN no_show = 'Yes' THEN 1 ELSE 0 END) AS Total_NoShows,
+    -- Calculate the No-Show Rate
+    (CAST(SUM(CASE WHEN no_show = 'Yes' THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(appointmentid)) AS NoShow_Rate_Percent
+FROM
+    cleaned_medical_appointments
+GROUP BY
+    neighbourhood
+ORDER BY
+    Total_Appointments DESC
+LIMIT 10;
+
+
+
+QUERY THREE:
+
+SELECT
+    patientid,
+    age,
+    gender,
+    no_show
+FROM
+    cleaned_medical_appointments
+WHERE
+    age > (
+        -- Subquery to find the average age of no-show patients
+        SELECT
+            AVG(age)
+        FROM
+            cleaned_medical_appointments
+        WHERE
+            no_show = 'Yes'
+    )
+ORDER BY
+    age DESC;
+
+
+
+
+QUERY FOUR:
+
+-- Step 1: Create the View
+CREATE VIEW Disease_NoShow_Impact AS
+SELECT
+    hypertension,
+    diabetes,
+    COUNT(appointmentid) AS Total_Appointments,
+    SUM(CASE WHEN no_show = 'Yes' THEN 1 ELSE 0 END) AS NoShow_Count,
+    (CAST(SUM(CASE WHEN no_show = 'Yes' THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(appointmentid)) AS NoShow_Rate_Percent
+FROM
+    cleaned_medical_appointments
+GROUP BY
+    hypertension, diabetes;
+
+-- Step 2: Query the View (Use this SELECT for your screenshot)
+SELECT
+    *
+FROM
+    Disease_NoShow_Impact
+ORDER BY
+    NoShow_Rate_Percent DESC;
+
+
+
+QUERY FIVE:
+
+
+CREATE INDEX idx_no_show
+ON cleaned_medical_appointments (no_show);
